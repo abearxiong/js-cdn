@@ -18,14 +18,14 @@ const defaults = {
 export default class JsCDN {
   /**
    * 
-   * @param {object | array} lib js库
+   * @param {string | object | array} lib js库
    * @param {object} options 配置
-   * @param {object} options.source 配置
-   * @param {object} options.destination 配置
-   * @param {object} options.upload 配置
-   * @param {object} options.queryFn 配置
-   * @param {object} options.downloadFn 配置
-   * @param {object} options.uploadFn 配置
+   * @param {string} options.source 数据源
+   * @param {string} options.destination 文件目录
+   * @param {object} options.upload OSS上传配置
+   * @param {function} options.queryFn 查询js库回调
+   * @param {function} options.downloadFn 下载js库文件回调
+   * @param {function} options.uploadFn 配置
    */
   constructor(lib, options) {
     this.config = {
@@ -38,7 +38,7 @@ export default class JsCDN {
   async exec() {
     try {
       const { libs, config } = this
-      const { destination, upload, queryFn, downloadFn } = config
+      const { destination, upload, queryFn, downloadFn, uploadFn } = config
 
       for (const lib of libs) {
         const { files } = await queryLib(lib, queryFn)
@@ -47,9 +47,10 @@ export default class JsCDN {
 
       await generateManifest(destination)
       if (upload) {
-        await ossUpload(upload)
+        await ossUpload(upload, uploadFn)
       }
-      return this.libs
+
+      return this
     } catch (error) {
       return Promise.reject(error)
     }

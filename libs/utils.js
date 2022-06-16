@@ -100,8 +100,8 @@ export async function queryVersion({ name, version }) {
 /**
  * 查找js库版本文件
  * @param {object} lib js库信息
- * @param {object} lib.name js库名
- * @param {object} lib.versions js库版本
+ * @param {string} lib.name js库名
+ * @param {array<string>} lib.versions js库版本
  * @param {function} callback callback
  * @returns 
  */
@@ -125,7 +125,7 @@ export function queryFiles({ name, versions }, callback) {
  * 查找js不同版本文件
  * @param {string | object} lib js库文件
  * @param {object} options 配置
- * @param {object} options.source 数据源
+ * @param {string} options.source 数据源
  * @param {function} callback callback
  * @returns 
  */
@@ -152,7 +152,7 @@ export async function queryLib(lib, options = {}, callback) {
 
 /**
  * 下载指定版本文件
- * @param {*} param0 
+ * @param {object} lib 
  * @param {*} dest 
  * @returns 
  */
@@ -248,17 +248,32 @@ export async function generateManifest(dir) {
 
 /**
  * 上传至aliyun-OSS服务器
- * @param {object | string} config 配置文件
+ * @param {object | string} config OSS配置文件
+ * @param {string} config.source 同步到 OSS 上的目录
+ * @param {string} config.dest OSS bucket 上的目标位置
+ * @param {string} config.accessKeyId OSS accessKeyId
+ * @param {string} config.secretAccessKey OSS secretAccessKey
+ * @param {string} config.endpoint OSS 实例
+ * @param {string} config.bucket bucket 名
+ * @param {boolean} config.incrementalMode 是否使用增量模式，在增量模式的情况下 oss-sync 将只会上传那些新增和修改过的文件
+ * @param {object} config.headers 可配置上传文件的 HTTP 头设置，具体请参考OSS文档
+ * @param {function} callback callback
  * @returns 
  */
-export async function ossUpload(config) {
+export async function ossUpload(config, callback) {
   try {
     if (typeof config !== 'object') {
       const configFile = config || './.oss-sync.json'
       config = await fse.readJSON(path.resolve(configFile))
     }
     const sync = new OSync(config)
-    return sync.exec()
+    return sync.exec().then(data => {
+      typeof callback === 'function' && callback(null, data)
+      return data
+    }).catch(error => {
+      typeof callback === 'function' && callback(error)
+      return Promise.reject(error)
+    })
   } catch (error) {
     return Promise.reject(error)
   }
