@@ -37,11 +37,14 @@ export default class JsCDN {
 
   async exec() {
     try {
-      for (const lib of this.libs) {
-        await this.getLib(lib)
+      const { libs, config } = this
+      const { destination, upload, queryFn, downloadFn } = config
+
+      for (const lib of libs) {
+        const { files } = await queryLib(lib, queryFn)
+        await downloadLib(files, destination, downloadFn)
       }
-  
-      const { destination, upload } = this.config
+
       await generateManifest(destination)
       if (upload) {
         await ossUpload(upload)
@@ -50,11 +53,5 @@ export default class JsCDN {
     } catch (error) {
       return Promise.reject(error)
     }
-  }
-
-  async getLib(lib) {
-    const { destination, queryFn, downloadFn } = this.config
-    const { files } = await queryLib(lib, queryFn)
-    return await downloadLib(files, destination, downloadFn)
   }
 }

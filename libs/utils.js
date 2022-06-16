@@ -6,24 +6,32 @@ import semver from 'semver'
 import OSync from 'oss-sync'
 
 import download from './download.js'
+import asyncPool from './async-pool.js'
 
 const VersonRegexp = /^(\d|([1-9](\d*)))(\.(\d|([1-9](\d*)))){1,2}$/
 
-export function getConfig(option) {
+/**
+ * js库配置
+ * @param {*} lib js库
+ * @param {*} options 选项
+ * @returns 
+ */
+export function getConfig(lib, options = {}) {
   const defaults = {
     version: 'latest',
     source: 'cdnjs'
   }
-  if (typeof option === 'string') {
+  if (typeof lib === 'string') {
     return {
-      name: option,
+      name: lib,
       ...defaults
     }
   }
-  if (option !== null && typeof option === 'object') {
+  if (lib !== null && typeof lib === 'object') {
     return {
       ...defaults,
-      ...option
+      ...lib,
+      ...options
     }
   }
 }
@@ -77,7 +85,7 @@ function requestFile(name, version) {
 
 /**
  * 查找js库版本
- * @param {object} param js库信息
+ * @param {object} lib js库信息
  * @returns 
  */
 export async function queryVersion({ name, version }) {
@@ -91,13 +99,15 @@ export async function queryVersion({ name, version }) {
 
 /**
  * 查找js库版本文件
- * @param {object} param js库信息
+ * @param {object} lib js库信息
+ * @param {object} lib.name js库名
+ * @param {object} lib.versions js库版本
  * @param {function} callback callback
  * @returns 
  */
 export function queryFiles({ name, versions }, callback) {
   try {
-    const promises = versions.map(version => {
+    return asyncPool(6, versions, (version) => {
       return requestFile(name, version).then(({ data }) => {
         typeof callback === 'function' && callback(null, data)
         return data
@@ -106,7 +116,6 @@ export function queryFiles({ name, versions }, callback) {
         return Promise.reject(error, { name, version })
       })
     })
-    return Promise.all(promises)
   } catch (error) {
     return Promise.reject(error)
   }
@@ -114,17 +123,26 @@ export function queryFiles({ name, versions }, callback) {
 
 /**
  * 查找js不同版本文件
- * @param {string | object} config 配置文件
+ * @param {string | object} lib js库文件
+ * @param {object} options 配置
+ * @param {object} options.source 数据源
  * @param {function} callback callback
  * @returns 
  */
-export async function queryLib(lib, options, callback) {
+export async function queryLib(lib, options = {}, callback) {
   try {
-    const conf = getConfig(lib)
+    if(typeof options === 'function') {
+      callback = options
+      options = {}
+    }
+    const conf = getConfig(lib, options)
     const { name, version } = conf
     const versions = semver.valid(version)
       ? [].concat(semver.valid(version))
       : await queryVersion(conf)
+
+    if (versions.length === 0) return { name, versions: [], files: [] }
+
     const files = await queryFiles({ name, versions }, callback)
     return { name, versions, files }
   } catch (error) {
@@ -162,6 +180,8 @@ function downloadVersion({ name, version, files }, dest) {
  */
 export async function downloadLib(files, dest = 'dist', callback) {
   try {
+    if (!Array.isArray(files) || files.length === 0) return []
+    
     const results = []
     for (let i = 0, len = files.length; i < len; i++) {
       const item = files[i]
