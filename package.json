@@ -1,0 +1,42 @@
+{
+  "name": "js-cdn",
+  "version": "0.1.0",
+  "description": "自建前端静态JS资源库CDN服务.",
+  "main": "./index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=12"
+  },
+  "exports": "./index.js",
+  "files": [
+    "libs",
+    "index.js"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Meqn/js-cdn.git"
+  },
+  "keywords": [
+    "js",
+    "cdn",
+    "cdnjs",
+    "javascript",
+    "library"
+  ],
+  "author": "Mervin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Meqn/js-cdn/issues"
+  },
+  "homepage": "https://github.com/Meqn/js-cdn#readme",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "fs-extra": "^10.1.0",
+    "globby": "^13.1.2",
+    "oss-sync": "^0.6.3",
+    "semver": "^7.3.7"
+  }
+}
