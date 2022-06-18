@@ -1,6 +1,6 @@
 {
   "name": "js-cdn",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "自建前端静态JS资源库CDN服务.",
   "main": "./index.js",
   "type": "module",

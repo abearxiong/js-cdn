@@ -5,7 +5,7 @@
 > 自建CDN服务，资源及版本可控。放在阿里云OSS上，“稳定又可靠”。 反正我信了
 
 
-# Why?
+## Why?
 前段时间，总有用户反馈公司的产品页面打不开或报错，经排查发现是`jsDelivr`服务在国内部分区域是无法访问的。(弃用`unpkg`)
 
 以前也有遇到由于公共CDN访问不了导致的问题，辗转国内的CDN服务，也有很多问题：1. 资源不全；2. 有时访问慢；3. 还有更换访问域名的。 
@@ -118,7 +118,8 @@ getLib({
 
 ## API
 ```js
-new CDN(lib, options)
+const cdnJS = new CDN(lib, options)
+cdnJS.exec()
 ```
 - `lib: string | object | array` js库
   - `name: string` js库名
