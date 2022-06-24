@@ -21,19 +21,12 @@ export function getConfig(lib, options = {}) {
     version: 'latest',
     source: 'cdnjs'
   }
-  if (typeof lib === 'string') {
-    return {
-      name: lib,
-      ...defaults
-    }
-  }
-  if (lib !== null && typeof lib === 'object') {
-    return {
-      ...defaults,
-      ...lib,
-      ...options
-    }
-  }
+
+  lib = typeof lib === 'string'
+    ? { name: lib }
+    : lib !== null && typeof lib === 'object' ? lib : {}
+  
+  return Object.assign({}, defaults, options, lib)
 }
 
 /**
@@ -67,8 +60,8 @@ function filterVersion(versions = [], filter) {
   }
 }
 
-async function createManifest(dir, data) {
-  return await fse.writeJSON(path.resolve(dir, 'manifest.json'), data, { spaces: 2 })
+function createManifest(dir, data) {
+  return fse.writeJSON(path.resolve(dir, 'manifest.json'), data, { spaces: 2 })
 }
 
 function getFileUrl(url, { name, version }) {
@@ -88,12 +81,33 @@ function requestFile(name, version) {
  * @param {object} lib js库信息
  * @returns 
  */
-export async function queryVersion({ name, version }) {
+async function queryVersion({ name, version }) {
   try {
     const { data } = await requestVersion(name)
     return filterVersion(data.versions, version)
   } catch (error) {
     return Promise.reject(error)
+  }
+}
+
+/**
+ * get manifest
+ * @param {string | array} url manifest文件地址
+ * @returns 
+ */
+export async function getManifest(url) {
+  try {
+    if (Array.isArray(url)) return url
+
+    const regx = /^http(s)?:\/\/.+/
+    if (regx.test(url)) {
+      const { data } = await axios.get(url)
+      return data
+    } else {
+      return await fse.readJSON(path.resolve(url))
+    }
+  } catch (error) {
+    return []
   }
 }
 
@@ -126,6 +140,7 @@ export function queryFiles({ name, versions }, callback) {
  * @param {string | object} lib js库文件
  * @param {object} options 配置
  * @param {string} options.source 数据源
+ * @param {string} options.manifest 已存在库
  * @param {function} callback callback
  * @returns 
  */
@@ -137,9 +152,25 @@ export async function queryLib(lib, options = {}, callback) {
     }
     const conf = getConfig(lib, options)
     const { name, version } = conf
-    const versions = semver.valid(version)
+    let versions = semver.valid(version)
       ? [].concat(semver.valid(version))
       : await queryVersion(conf)
+    
+    // 对比本地已存在的js库
+    if (conf.manifest && versions.length > 0) {
+      const libList = await getManifest(conf.manifest)
+      let libVersions = []
+      for (const item of libList) {
+        if (item.name === name && item.versions) {
+          libVersions = [].concat(item.versions)
+          break
+        }
+      }
+      // 移除已存在的版本
+      if (libVersions.length > 0) {
+        versions = versions.filter(item => !libVersions.includes(item))
+      }
+    }
 
     if (versions.length === 0) return { name, versions: [], files: [] }
 
