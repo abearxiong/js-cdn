@@ -1,6 +1,6 @@
 {
-  "name": "js-cdn",
-  "version": "0.3.0",
+  "name": "@kevisual/js-cdn",
+  "version": "0.3.1",
   "description": "自建前端静态JS资源库CDN服务.",
   "main": "./index.js",
   "type": "module",
@@ -33,10 +33,10 @@
   },
   "homepage": "https://github.com/Meqn/js-cdn#readme",
   "dependencies": {
-    "axios": "^0.27.2",
-    "fs-extra": "^10.1.0",
-    "globby": "^13.1.2",
+    "axios": "^1.8.3",
+    "fs-extra": "^11.3.0",
+    "globby": "^14.1.0",
     "oss-sync": "^0.6.3",
-    "semver": "^7.3.7"
+    "semver": "^7.7.1"
   }
 }

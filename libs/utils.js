@@ -69,7 +69,10 @@ function getFileUrl(url, { name, version }) {
 }
 
 function requestVersion(name) {
-  return axios.get(`https://api.cdnjs.com/libraries/${name}?fields=versions`)
+  const url = `https://api.cdnjs.com/libraries/${name}?fields=versions`
+  
+  console.log('url', url)
+  return axios.get(url)
 }
 
 function requestFile(name, version) {
@@ -83,6 +86,7 @@ function requestFile(name, version) {
  */
 async function queryVersion({ name, version }) {
   try {
+    console.log('name', name)
     const { data } = await requestVersion(name)
     return filterVersion(data.versions, version)
   } catch (error) {
@@ -177,6 +181,7 @@ export async function queryLib(lib, options = {}, callback) {
     const files = await queryFiles({ name, versions }, callback)
     return { name, versions, files }
   } catch (error) {
+    console.log('name', lib)
     return Promise.reject(error)
   }
 }
